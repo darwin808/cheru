@@ -31,3 +31,10 @@ tauri-build = { version = "2", features = [] }
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+panic = "abort"

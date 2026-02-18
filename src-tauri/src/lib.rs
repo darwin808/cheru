@@ -37,18 +37,17 @@ pub fn run() {
             };
             app.manage(state);
 
-            // Spawn background icon conversion
-            let app_handle = app.handle().clone();
-            std::thread::spawn(move || {
-                let state = app_handle.state::<AppState>();
-                let mut index = state.index.write().unwrap();
-                #[cfg(target_os = "macos")]
-                {
+            // Spawn background icon conversion (macOS only)
+            #[cfg(target_os = "macos")]
+            {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    let state = app_handle.state::<AppState>();
+                    let mut index = state.index.write().unwrap();
                     indexer::macos::convert_icons(&mut index);
                     println!("Icon conversion complete");
-                }
-                drop(index);
-            });
+                });
+            }
 
             // Set up system tray
             let show = MenuItemBuilder::with_id("show", "Show Launcher").build(app)?;

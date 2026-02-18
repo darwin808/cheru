@@ -9,7 +9,7 @@ pub fn index_apps() -> Vec<AppEntry> {
 
     for path in DesktopIter::new(freedesktop_desktop_entry::default_paths()) {
         if let Ok(content) = fs::read_to_string(&path) {
-            if let Ok(entry) = DesktopEntry::from_str(&path, &content, &["en"]) {
+            if let Ok(entry) = DesktopEntry::from_str(&path, &content, Some(&["en"])) {
                 // Skip non-application types
                 if entry.type_() != Some("Application") {
                     continue;
@@ -20,7 +20,7 @@ pub fn index_apps() -> Vec<AppEntry> {
                     continue;
                 }
 
-                let name = match entry.name(&["en"]) {
+                let name = match entry.name(Some(&["en"])) {
                     Some(n) => n.to_string(),
                     None => continue,
                 };
@@ -39,7 +39,7 @@ pub fn index_apps() -> Vec<AppEntry> {
                     name,
                     exec,
                     icon: entry.icon().map(|s| s.to_string()),
-                    description: entry.comment(&["en"]).map(|s| s.to_string()),
+                    description: entry.comment(Some(&["en"])).map(|s| s.to_string()),
                     result_type: ResultType::App,
                 });
             }
