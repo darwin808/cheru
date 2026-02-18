@@ -50,7 +50,7 @@ function App() {
     [moveSelection, launch, hide]
   );
 
-  // Refocus input when window becomes visible
+  // Refocus input and reload results when window becomes visible
   useEffect(() => {
     let cancelled = false;
     let unlistenFn: (() => void) | null = null;
@@ -59,9 +59,13 @@ function App() {
     currentWindow
       .onFocusChanged(({ payload: focused }) => {
         if (cancelled) return;
-        if (focused && inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.select();
+        if (focused) {
+          if (inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+          }
+          // Repopulate results after hide() cleared them
+          search("");
         }
       })
       .then((fn) => {
@@ -76,7 +80,7 @@ function App() {
       cancelled = true;
       unlistenFn?.();
     };
-  }, []);
+  }, [search]);
 
   // Load theme from config
   useEffect(() => {
