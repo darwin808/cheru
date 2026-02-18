@@ -72,14 +72,16 @@ pub fn run() {
 
             // Register global shortcut (Alt+Space)
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
-            app.global_shortcut().on_shortcut("Alt+Space", |app, _shortcut, _event| {
-                if let Some(window) = app.get_webview_window("launcher") {
-                    if window.is_visible().unwrap_or(false) {
-                        let _ = window.hide();
-                    } else {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                        let _ = window.center();
+            app.global_shortcut().on_shortcut("Alt+Space", |app, _shortcut, event| {
+                if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                    if let Some(window) = app.get_webview_window("launcher") {
+                        if window.is_visible().unwrap_or(false) {
+                            let _ = window.hide();
+                        } else {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                            let _ = window.center();
+                        }
                     }
                 }
             })?;
