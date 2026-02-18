@@ -32,6 +32,13 @@ brew tap darwin808/cheru
 brew install --cask cheru
 ```
 
+If macOS Gatekeeper blocks the app, remove the quarantine attribute and open manually:
+
+```sh
+xattr -cr /Applications/Cheru.app
+open /Applications/Cheru.app
+```
+
 ### Build from Source
 
 **Prerequisites**
