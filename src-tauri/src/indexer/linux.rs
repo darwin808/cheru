@@ -20,7 +20,7 @@ pub fn index_apps() -> Vec<AppEntry> {
                     continue;
                 }
 
-                let name = match entry.name(Some(&["en"])) {
+                let name = match entry.name(&["en"]) {
                     Some(n) => n.to_string(),
                     None => continue,
                 };
@@ -39,7 +39,7 @@ pub fn index_apps() -> Vec<AppEntry> {
                     name,
                     exec,
                     icon: entry.icon().map(|s| s.to_string()),
-                    description: entry.comment(Some(&["en"])).map(|s| s.to_string()),
+                    description: entry.comment(&["en"]).map(|s| s.to_string()),
                     result_type: ResultType::App,
                 });
             }
