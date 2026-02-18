@@ -9,7 +9,9 @@ export function ActionBar({ selectedResult }: ActionBarProps) {
   const actionLabel = selectedResult
     ? selectedResult.result_type === "Folder"
       ? "Open Folder"
-      : "Open Application"
+      : selectedResult.result_type === "Image"
+        ? "Open Image"
+        : "Open Application"
     : "Open";
 
   return (
@@ -17,7 +19,11 @@ export function ActionBar({ selectedResult }: ActionBarProps) {
       <div className={styles.left}>
         {selectedResult && (
           <span className={styles.selectedType}>
-            {selectedResult.result_type === "App" ? "Application" : "Folder"}
+            {selectedResult.result_type === "App"
+              ? "Application"
+              : selectedResult.result_type === "Folder"
+                ? "Folder"
+                : "Image"}
           </span>
         )}
       </div>

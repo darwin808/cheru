@@ -34,7 +34,14 @@
             "/Applications/**",
             "/System/Applications/**",
             "$HOME/Applications/**",
-            "$HOME/.cache/cheru/**"
+            "$HOME/.cache/cheru/**",
+            "$HOME/Desktop/**",
+            "$HOME/Documents/**",
+            "$HOME/Downloads/**",
+            "$HOME/Pictures/**",
+            "$HOME/Projects/**",
+            "$HOME/Developer/**",
+            "$HOME/Code/**"
           ]
         }
       }

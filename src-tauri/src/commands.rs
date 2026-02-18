@@ -11,6 +11,7 @@ use crate::matcher::FuzzyMatcher;
 pub struct AppState {
     pub index: RwLock<Vec<AppEntry>>,
     pub folder_index: Vec<AppEntry>,
+    pub image_index: Vec<AppEntry>,
     pub matcher: Mutex<FuzzyMatcher>,
 }
 
@@ -168,6 +169,170 @@ pub fn search_folders(query: String, state: State<'_, AppState>) -> Vec<AppResul
         .take(10)
         .map(|idx| AppResult::from(&state.folder_index[idx]))
         .collect()
+}
+
+#[tauri::command]
+pub fn search_images(query: String, state: State<'_, AppState>) -> Vec<AppResult> {
+    if query.len() < 2 {
+        return Vec::new();
+    }
+
+    let mut matcher = state.matcher.lock().unwrap_or_else(|e| e.into_inner());
+    let indices = matcher.search(&query, &state.image_index);
+
+    indices
+        .into_iter()
+        .take(20)
+        .map(|idx| AppResult::from(&state.image_index[idx]))
+        .collect()
+}
+
+#[tauri::command]
+pub fn open_path(path: String) -> Result<(), CommandError> {
+    let p = std::path::Path::new(&path);
+
+    // Must be absolute
+    if !p.is_absolute() {
+        return Err(CommandError::LaunchError("Path must be absolute".to_string()));
+    }
+
+    // Must exist
+    if !p.exists() {
+        return Err(CommandError::LaunchError("Path does not exist".to_string()));
+    }
+
+    // Canonicalize to resolve symlinks
+    let canonical = p.canonicalize().map_err(|e| {
+        CommandError::LaunchError(format!("Cannot resolve path: {}", e))
+    })?;
+
+    // Must be under home directory (not system paths)
+    let home = dirs::home_dir().ok_or_else(|| {
+        CommandError::LaunchError("Cannot determine home directory".to_string())
+    })?;
+
+    if !canonical.starts_with(&home) {
+        return Err(CommandError::LaunchError(
+            "Can only open paths under home directory".to_string(),
+        ));
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(canonical.to_string_lossy().to_string())
+            .spawn()
+            .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("xdg-open")
+            .arg(canonical.to_string_lossy().to_string())
+            .spawn()
+            .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn browse_directory(path: String, filter: String) -> Result<Vec<AppResult>, CommandError> {
+    let dir = std::path::Path::new(&path);
+
+    if !dir.is_absolute() {
+        return Err(CommandError::LaunchError("Path must be absolute".to_string()));
+    }
+
+    if !dir.is_dir() {
+        return Err(CommandError::LaunchError("Path is not a directory".to_string()));
+    }
+
+    // Canonicalize and verify under home
+    let canonical = dir.canonicalize().map_err(|e| {
+        CommandError::LaunchError(format!("Cannot resolve path: {}", e))
+    })?;
+
+    let home = dirs::home_dir().ok_or_else(|| {
+        CommandError::LaunchError("Cannot determine home directory".to_string())
+    })?;
+
+    if !canonical.starts_with(&home) {
+        return Err(CommandError::LaunchError(
+            "Can only browse paths under home directory".to_string(),
+        ));
+    }
+
+    let mut entries: Vec<AppEntry> = Vec::new();
+    let read_dir = std::fs::read_dir(&canonical).map_err(|e| {
+        CommandError::LaunchError(format!("Cannot read directory: {}", e))
+    })?;
+
+    for entry in read_dir.flatten() {
+        let entry_path = entry.path();
+        let name = match entry_path.file_name().and_then(|n| n.to_str()) {
+            Some(n) if !n.starts_with('.') => n.to_string(),
+            _ => continue,
+        };
+
+        let result_type = if entry_path.is_dir() {
+            if name.ends_with(".app") {
+                crate::indexer::ResultType::App
+            } else {
+                crate::indexer::ResultType::Folder
+            }
+        } else {
+            let ext = entry_path
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.to_lowercase())
+                .unwrap_or_default();
+            if ["png", "jpg", "jpeg", "gif", "webp", "svg"].contains(&ext.as_str()) {
+                crate::indexer::ResultType::Image
+            } else {
+                // Skip non-image files for now — we only show folders and images in browse mode
+                continue;
+            }
+        };
+
+        let description = Some(canonical.to_string_lossy().to_string());
+
+        entries.push(AppEntry {
+            name,
+            exec: entry_path.to_string_lossy().to_string(),
+            icon: if result_type == crate::indexer::ResultType::Image {
+                Some(entry_path.to_string_lossy().to_string())
+            } else {
+                None
+            },
+            description,
+            result_type,
+        });
+    }
+
+    // If there's a filter, fuzzy match; otherwise return all sorted
+    if filter.is_empty() {
+        entries.sort_by(|a, b| {
+            // Folders first, then images
+            let type_ord = |rt: &crate::indexer::ResultType| match rt {
+                crate::indexer::ResultType::Folder => 0,
+                crate::indexer::ResultType::App => 1,
+                crate::indexer::ResultType::Image => 2,
+            };
+            type_ord(&a.result_type)
+                .cmp(&type_ord(&b.result_type))
+                .then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        });
+        Ok(entries.iter().take(50).map(AppResult::from).collect())
+    } else {
+        let mut matcher = FuzzyMatcher::new();
+        let indices = matcher.search(&filter, &entries);
+        Ok(indices
+            .into_iter()
+            .take(50)
+            .map(|idx| AppResult::from(&entries[idx]))
+            .collect())
+    }
 }
 
 /// Strip freedesktop field codes from exec strings (%u, %U, %f, %F, etc.)

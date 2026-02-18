@@ -4,7 +4,11 @@ use serde::{Deserialize, Serialize};
 pub enum ResultType {
     App,
     Folder,
+    Image,
 }
+
+const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
+const MAX_IMAGES: usize = 5000;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppEntry {
@@ -57,6 +61,93 @@ pub fn build_folder_index() -> Vec<AppEntry> {
 
     folders.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     folders
+}
+
+pub fn build_image_index() -> Vec<AppEntry> {
+    let mut images = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    let home = dirs::home_dir().unwrap_or_default();
+    let search_dirs = vec![
+        home.join("Desktop"),
+        home.join("Documents"),
+        home.join("Downloads"),
+        home.join("Pictures"),
+        home.join("Projects"),
+        home.join("Developer"),
+        home.join("Code"),
+    ];
+
+    for dir in &search_dirs {
+        if images.len() >= MAX_IMAGES {
+            break;
+        }
+        collect_images(dir, 0, 3, &mut images, &mut seen);
+    }
+
+    images.truncate(MAX_IMAGES);
+    images.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    images
+}
+
+fn collect_images(
+    dir: &std::path::Path,
+    depth: usize,
+    max_depth: usize,
+    images: &mut Vec<AppEntry>,
+    seen: &mut std::collections::HashSet<std::path::PathBuf>,
+) {
+    if depth >= max_depth || images.len() >= MAX_IMAGES {
+        return;
+    }
+
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+
+        // Skip hidden entries
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) if !n.starts_with('.') => n.to_string(),
+            _ => continue,
+        };
+
+        if path.is_dir() {
+            // Skip noise directories
+            if matches!(
+                name.as_str(),
+                "node_modules" | "target" | "build" | "dist" | "__pycache__" | ".git"
+            ) {
+                continue;
+            }
+            if name.ends_with(".app") {
+                continue;
+            }
+            collect_images(&path, depth + 1, max_depth, images, seen);
+        } else if path.is_file() {
+            // Check if it's an image
+            let ext = path
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| e.to_lowercase());
+
+            if let Some(ref ext) = ext {
+                if IMAGE_EXTENSIONS.contains(&ext.as_str()) && seen.insert(path.clone()) {
+                    let description = path.parent().map(|p| p.to_string_lossy().to_string());
+                    images.push(AppEntry {
+                        name,
+                        exec: path.to_string_lossy().to_string(),
+                        icon: Some(path.to_string_lossy().to_string()), // icon IS the image itself
+                        description,
+                        result_type: ResultType::Image,
+                    });
+                }
+            }
+        }
+    }
 }
 
 fn collect_folders(

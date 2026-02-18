@@ -3,6 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { SearchBar } from "./components/SearchBar";
 import { ResultsList } from "./components/ResultsList";
 import { ActionBar } from "./components/ActionBar";
+import { PreviewPanel } from "./components/PreviewPanel";
 import { useLauncher } from "./hooks/useLauncher";
 import "./App.css";
 
@@ -13,6 +14,7 @@ function App() {
     results,
     selectedIndex,
     setSelectedIndex,
+    browsePath,
     search,
     launch,
     moveSelection,
@@ -71,18 +73,27 @@ function App() {
     };
   }, []);
 
+  const selectedResult = results[selectedIndex] ?? null;
+  const showPreview = selectedResult?.result_type === "Image";
+
   return (
     <div className="launcher" onKeyDown={handleKeyDown}>
       <SearchBar query={query} onQueryChange={search} inputRef={inputRef} />
-      <ResultsList
-        results={results}
-        selectedIndex={selectedIndex}
-        onSelect={setSelectedIndex}
-        onLaunch={launch}
-      />
-      <ActionBar
-        selectedResult={results[selectedIndex] ?? null}
-      />
+      {browsePath && (
+        <div className="breadcrumb">
+          {browsePath}
+        </div>
+      )}
+      <div className="content">
+        <ResultsList
+          results={results}
+          selectedIndex={selectedIndex}
+          onSelect={setSelectedIndex}
+          onLaunch={launch}
+        />
+        {showPreview && <PreviewPanel result={selectedResult} />}
+      </div>
+      <ActionBar selectedResult={selectedResult} />
     </div>
   );
 }

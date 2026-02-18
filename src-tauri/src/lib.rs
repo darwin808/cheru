@@ -24,10 +24,15 @@ pub fn run() {
             let folder_index = indexer::build_folder_index();
             println!("Indexed {} folders", folder_index.len());
 
+            // Build image index
+            let image_index = indexer::build_image_index();
+            println!("Indexed {} images", image_index.len());
+
             // Store state
             let state = AppState {
                 index: RwLock::new(index),
                 folder_index,
+                image_index,
                 matcher: Mutex::new(FuzzyMatcher::new()),
             };
             app.manage(state);
@@ -103,6 +108,9 @@ pub fn run() {
             commands::hide_launcher_window,
             commands::get_index_size,
             commands::search_folders,
+            commands::search_images,
+            commands::open_path,
+            commands::browse_directory,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,4 +1,4 @@
-export type ResultType = "App" | "Folder";
+export type ResultType = "App" | "Folder" | "Image";
 
 export interface AppResult {
   name: string;
