@@ -5,6 +5,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
 use thiserror::Error;
 
+use crate::config;
 use crate::indexer::{AppEntry, ResultType};
 use crate::matcher::FuzzyMatcher;
 
@@ -153,6 +154,15 @@ pub fn hide_launcher_window(app: AppHandle) -> Result<(), CommandError> {
 #[tauri::command]
 pub fn get_index_size(state: State<'_, AppState>) -> usize {
     state.index.read().unwrap_or_else(|e| e.into_inner()).len()
+}
+
+#[tauri::command]
+pub fn get_theme() -> config::ThemeConfig {
+    let cfg = config::load();
+    config::ThemeConfig {
+        theme: cfg.theme,
+        colors: cfg.colors,
+    }
 }
 
 #[tauri::command]

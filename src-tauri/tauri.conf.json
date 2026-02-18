@@ -1,6 +1,6 @@
 {
   "productName": "Cheru",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "identifier": "com.cheru.launcher",
   "build": {
     "beforeDevCommand": "npm run dev",

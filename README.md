@@ -13,11 +13,11 @@ Cheru is an open-source alternative to Raycast and Alfred, built with Tauri v2 (
 - **Image Search** — finds PNG, JPG, GIF, WebP, and SVG files across your home directory, capped at 5000 entries
 - **Directory Drill-Down** — type `downloads/` to browse a folder's contents, then keep drilling with `/` to go deeper
 - **Image Preview Panel** — a slide-in panel renders a preview when an image result is selected; GIF animation is supported
-- **Global Hotkey** — Alt+Space toggles the launcher from anywhere on the desktop
+- **Configurable Hotkey** — toggle the launcher from anywhere; default `Alt+Space`, customizable via `~/.config/cheru/config.toml`
 - **System Tray** — Show/Quit menu available in the menu bar / system tray
 - **Real App Icons** — `.icns` files are converted to PNG in the background and cached at `~/.cache/cheru/icons/`
 - **Keyboard-Driven** — arrow keys navigate, Enter launches or drills, Escape hides
-- **Dark Frosted Glass UI** — transparent window with backdrop blur
+- **Themes** — built-in Gruvbox (default), Dracula, Atom One Dark, and Dark themes; fully customizable colors via config
 
 ---
 
@@ -56,11 +56,47 @@ npm run tauri build
 
 | Key | Action |
 |---|---|
-| `Alt+Space` | Toggle launcher |
+| `Alt+Space` (default) | Toggle launcher (configurable) |
 | `↑` / `↓` | Navigate results |
 | `Enter` | Launch app / Open folder or image / Drill into folder |
 | `Escape` | Hide launcher |
 | Type `/` | Enter browse mode (e.g., `downloads/`) |
+
+---
+
+## Configuration
+
+Cheru reads its config from `~/.config/cheru/config.toml`. A default file is created on first launch.
+
+```toml
+# Hotkey to toggle the launcher window
+hotkey = "Cmd+D"
+
+# Theme: "gruvbox" (default), "dark", "dracula", "one-dark"
+theme = "gruvbox"
+
+# Custom color overrides (optional)
+# These override any theme's colors. Use CSS color values.
+# [colors]
+# bg_primary = "rgba(40, 40, 40, 0.92)"
+# accent = "#d79921"
+# text_primary = "#ebdbb2"
+```
+
+### Available Themes
+
+| Theme | Description |
+|---|---|
+| `gruvbox` | Warm retro groove (default) |
+| `dark` | Neutral dark with blue accent |
+| `dracula` | Purple-accented dark theme |
+| `one-dark` | Atom One Dark colors |
+
+### Custom Colors
+
+All CSS color values are supported. Available keys:
+
+`bg_primary`, `bg_secondary`, `bg_hover`, `bg_selected`, `bg_actionbar`, `text_primary`, `text_secondary`, `text_placeholder`, `accent`, `border`
 
 ---
 
@@ -77,6 +113,7 @@ cheru/
 │       ├── main.rs               # Entry point
 │       ├── lib.rs                # Tauri setup, plugins, state, tray, hotkey
 │       ├── commands.rs           # IPC commands + AppState
+│       ├── config.rs             # Config file reader (~/.config/cheru/config.toml)
 │       ├── matcher.rs            # nucleo-matcher fuzzy search wrapper
 │       └── indexer/
 │           ├── mod.rs            # AppEntry struct, folder/image indexing
@@ -85,6 +122,7 @@ cheru/
 └── src/                          # React frontend
     ├── App.tsx                   # Root component, keyboard handling
     ├── App.css                   # Global styles, CSS variables
+    ├── themes.ts                 # Built-in theme definitions + applicator
     ├── types/
     │   └── launcher.ts           # AppResult interface
     ├── hooks/
@@ -108,7 +146,8 @@ cheru/
 | Linux app discovery | freedesktop-desktop-entry |
 | macOS app discovery | plist crate + sips |
 | Global hotkey | tauri-plugin-global-shortcut |
-| Styling | CSS Modules, dark theme |
+| Styling | CSS Modules, 4 built-in themes |
+| Configuration | TOML config file |
 
 ---
 
@@ -126,6 +165,7 @@ The frontend communicates with the Rust backend through Tauri's IPC bridge. All 
 | `open_path` | `{ path }` | `void` | Open folder or image with system handler |
 | `hide_launcher_window` | — | `void` | Hide the launcher window |
 | `get_index_size` | — | `number` | Total number of indexed apps |
+| `get_theme` | — | `ThemeConfig` | Returns theme name and custom color overrides |
 
 ---
 
@@ -167,7 +207,7 @@ Cheru applies several layers of restrictions to prevent misuse of its launch and
 ## Known Limitations
 
 - No Wayland layer-shell support; the window uses `alwaysOnTop` via XDG shell instead
-- The global hotkey (Alt+Space) may not work on pure Wayland sessions — bind a compositor-level hotkey as a workaround
+- The global hotkey may not work on pure Wayland sessions — bind a compositor-level hotkey as a workaround
 - The app index is built once at startup; there is no live refresh if you install new applications
 - No extension or plugin system yet
 
@@ -195,4 +235,4 @@ cd src-tauri && cargo test
 
 ## Version
 
-**0.2.0** — [github.com/darwin808/cheru](https://github.com/darwin808/cheru)
+**0.2.3** — [github.com/darwin808/cheru](https://github.com/darwin808/cheru)

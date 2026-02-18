@@ -1,5 +1,7 @@
 import { useRef, useCallback, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
+import { applyTheme } from "./themes";
 import { SearchBar } from "./components/SearchBar";
 import { ResultsList } from "./components/ResultsList";
 import { ActionBar } from "./components/ActionBar";
@@ -74,6 +76,13 @@ function App() {
       cancelled = true;
       unlistenFn?.();
     };
+  }, []);
+
+  // Load theme from config
+  useEffect(() => {
+    invoke<{ theme: string; colors: Record<string, string> }>("get_theme").then(
+      (cfg) => applyTheme(cfg.theme, cfg.colors)
+    );
   }, []);
 
   const selectedResult = results[selectedIndex] ?? null;

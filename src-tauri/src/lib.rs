@@ -115,6 +115,7 @@ pub fn run() {
             commands::search_images,
             commands::open_path,
             commands::browse_directory,
+            commands::get_theme,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

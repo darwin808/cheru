@@ -71,7 +71,7 @@
   width: fit-content;
   padding: 2px 8px;
   margin-top: 4px;
-  background: rgba(80, 120, 200, 0.25);
+  background: var(--bg-selected);
   border-radius: 4px;
   font-size: 10px;
   font-weight: 600;
