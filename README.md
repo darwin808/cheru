@@ -4,6 +4,8 @@
 
 Cheru is an open-source alternative to Raycast and Alfred, built with Tauri v2 (Rust) and React 19 (TypeScript). It stays out of your way until you need it — summon it with a global hotkey, find what you're looking for in milliseconds, and get back to work.
 
+![Cheru Demo](demo.gif)
+
 ---
 
 ## Features
