@@ -8,6 +8,8 @@ pub struct Config {
     pub hotkey: String,
     #[serde(default = "default_theme")]
     pub theme: String,
+    #[serde(default = "default_autostart")]
+    pub autostart: bool,
     #[serde(default)]
     pub colors: HashMap<String, String>,
 }
@@ -20,12 +22,17 @@ fn default_theme() -> String {
     "gruvbox".to_string()
 }
 
+fn default_autostart() -> bool {
+    true
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
             hotkey: default_hotkey(),
             theme: default_theme(),
             colors: HashMap::new(),
+            autostart: default_autostart(),
         }
     }
 }
@@ -56,6 +63,9 @@ hotkey = "Alt+Space"
 
 # Theme: "gruvbox" (default), "dark", "dracula", "one-dark"
 theme = "gruvbox"
+
+# Auto-start Cheru on login (true/false)
+autostart = true
 
 # Custom color overrides (optional)
 # These override any theme's colors. Use CSS color values.

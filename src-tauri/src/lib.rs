@@ -12,6 +12,57 @@ use tauri::{
     Manager,
 };
 
+fn setup_autostart(enabled: bool) {
+    #[cfg(target_os = "macos")]
+    {
+        let plist_dir = dirs::home_dir()
+            .unwrap_or_default()
+            .join("Library/LaunchAgents");
+        let plist_path = plist_dir.join("com.cheru.launcher.plist");
+
+        if enabled {
+            let _ = std::fs::create_dir_all(&plist_dir);
+            let app_path = "/Applications/Cheru.app/Contents/MacOS/Cheru";
+            let plist_content = format!(
+                r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.cheru.launcher</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{}</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>"#,
+                app_path
+            );
+            let _ = std::fs::write(&plist_path, plist_content);
+        } else if plist_path.exists() {
+            let _ = std::fs::remove_file(&plist_path);
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let autostart_dir = dirs::config_dir()
+            .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join(".config"))
+            .join("autostart");
+        let desktop_path = autostart_dir.join("cheru.desktop");
+
+        if enabled {
+            let _ = std::fs::create_dir_all(&autostart_dir);
+            let desktop_content = "[Desktop Entry]\nType=Application\nName=Cheru\nExec=cheru\nX-GNOME-Autostart-enabled=true\n";
+            let _ = std::fs::write(&desktop_path, desktop_content);
+        } else if desktop_path.exists() {
+            let _ = std::fs::remove_file(&desktop_path);
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -74,6 +125,8 @@ pub fn run() {
             // Register global shortcut from config
             let cfg = config::load();
             println!("Hotkey: {}", cfg.hotkey);
+            // Set up autostart on login
+            setup_autostart(cfg.autostart);
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
             app.global_shortcut().on_shortcut(cfg.hotkey.as_str(), |app, _shortcut, event| {
                 if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
