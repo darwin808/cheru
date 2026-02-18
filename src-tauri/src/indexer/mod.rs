@@ -46,10 +46,12 @@ pub fn build_folder_index() -> Vec<AppEntry> {
 
     let home = dirs::home_dir().unwrap_or_default();
     let search_dirs = vec![
-        home.clone(),
         home.join("Desktop"),
         home.join("Documents"),
         home.join("Downloads"),
+        home.join("Pictures"),
+        home.join("Music"),
+        home.join("Movies"),
         home.join("Projects"),
         home.join("Developer"),
         home.join("Code"),
@@ -119,7 +121,27 @@ fn collect_images(
             // Skip noise directories
             if matches!(
                 name.as_str(),
-                "node_modules" | "target" | "build" | "dist" | "__pycache__" | ".git"
+                "node_modules"
+                    | "target"
+                    | "build"
+                    | "dist"
+                    | "__pycache__"
+                    | ".git"
+                    | "Library"
+                    | "Caches"
+                    | "Containers"
+                    | "HTTPStorages"
+                    | "WebKit"
+                    | "Saved Application State"
+                    | "Application Support"
+                    | "Application Scripts"
+                    | "Group Containers"
+                    | "GPUCache"
+                    | "DerivedData"
+                    | "Logs"
+                    | "tmp"
+                    | "var"
+                    | "usr"
             ) {
                 continue;
             }
@@ -179,7 +201,27 @@ fn collect_folders(
 
         if matches!(
             name.as_str(),
-            "node_modules" | "target" | "build" | "dist" | "__pycache__" | ".git"
+            "node_modules"
+                | "target"
+                | "build"
+                | "dist"
+                | "__pycache__"
+                | ".git"
+                | "Library"
+                | "Caches"
+                | "Containers"
+                | "HTTPStorages"
+                | "WebKit"
+                | "Saved Application State"
+                | "Application Support"
+                | "Application Scripts"
+                | "Group Containers"
+                | "GPUCache"
+                | "DerivedData"
+                | "Logs"
+                | "tmp"
+                | "var"
+                | "usr"
         ) {
             continue;
         }

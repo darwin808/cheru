@@ -304,7 +304,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "cheru"
-version = "0.1.0"
+version = "0.2.2"
 dependencies = [
  "dirs",
  "freedesktop-desktop-entry",
@@ -316,6 +316,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-global-shortcut",
  "thiserror 2.0.18",
+ "toml 0.8.2",
 ]
 
 [[package]]

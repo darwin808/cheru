@@ -1,6 +1,6 @@
 [package]
 name = "cheru"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 
 [lib]
@@ -19,6 +19,7 @@ serde_json = "1"
 nucleo-matcher = "0.3"
 thiserror = "2"
 dirs = "6"
+toml = "0.8"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 freedesktop-desktop-entry = "0.7"

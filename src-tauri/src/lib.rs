@@ -1,4 +1,5 @@
 mod commands;
+mod config;
 mod indexer;
 mod matcher;
 
@@ -70,9 +71,11 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Register global shortcut (Alt+Space)
+            // Register global shortcut from config
+            let cfg = config::load();
+            println!("Hotkey: {}", cfg.hotkey);
             use tauri_plugin_global_shortcut::GlobalShortcutExt;
-            app.global_shortcut().on_shortcut("Alt+Space", |app, _shortcut, event| {
+            app.global_shortcut().on_shortcut(cfg.hotkey.as_str(), |app, _shortcut, event| {
                 if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
                     if let Some(window) = app.get_webview_window("launcher") {
                         if window.is_visible().unwrap_or(false) {

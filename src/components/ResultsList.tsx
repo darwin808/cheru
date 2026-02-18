@@ -8,12 +8,19 @@ interface ResultsListProps {
   selectedIndex: number;
   onSelect: (index: number) => void;
   onLaunch: () => void;
+  isKeyboardNav: React.RefObject<boolean>;
 }
 
 interface Section {
   label: string;
   items: { result: AppResult; globalIndex: number }[];
 }
+
+const TYPE_LABELS: Record<string, string> = {
+  App: "Applications",
+  Folder: "Folders",
+  Image: "Images",
+};
 
 function groupByType(results: AppResult[]): Section[] {
   const sections: Section[] = [];
@@ -24,7 +31,7 @@ function groupByType(results: AppResult[]): Section[] {
     if (result.result_type !== currentType) {
       currentType = result.result_type;
       currentSection = {
-        label: result.result_type === "App" ? "Applications" : "Folders",
+        label: TYPE_LABELS[result.result_type] ?? result.result_type,
         items: [],
       };
       sections.push(currentSection);
@@ -40,6 +47,7 @@ export function ResultsList({
   selectedIndex,
   onSelect,
   onLaunch,
+  isKeyboardNav,
 }: ResultsListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLDivElement>(null);
@@ -79,7 +87,7 @@ export function ResultsList({
   return (
     <div className={styles.list} ref={listRef}>
       {sections.map((section) => (
-        <div key={section.label} className={styles.section}>
+        <div key={`${section.label}-${sections.indexOf(section)}`} className={styles.section}>
           <div className={styles.sectionHeader}>{section.label}</div>
           {section.items.map(({ result, globalIndex }) => {
             const iconUrl = result.icon ? iconUrls.get(result.icon) : null;
@@ -92,7 +100,7 @@ export function ResultsList({
                 className={`${styles.item} ${
                   globalIndex === selectedIndex ? styles.selected : ""
                 }`}
-                onMouseEnter={() => onSelect(globalIndex)}
+                onMouseEnter={() => { if (!isKeyboardNav.current) onSelect(globalIndex); }}
                 onClick={onLaunch}
               >
                 <div className={styles.appIcon}>
@@ -109,6 +117,8 @@ export function ResultsList({
                     <span className={styles.appIconPlaceholder}>
                       {result.result_type === "Folder"
                         ? "\u{1F4C1}"
+                        : result.result_type === "Image"
+                        ? "\u{1F5BC}"
                         : result.name.charAt(0).toUpperCase()}
                     </span>
                   )}
@@ -122,7 +132,7 @@ export function ResultsList({
                   )}
                 </div>
                 <span className={styles.typeLabel}>
-                  {result.result_type === "App" ? "Application" : "Folder"}
+                  {result.result_type === "App" ? "Application" : result.result_type === "Folder" ? "Folder" : "Image"}
                 </span>
               </div>
             );

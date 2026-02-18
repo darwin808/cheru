@@ -9,6 +9,7 @@ import "./App.css";
 
 function App() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const isKeyboardNav = useRef(false);
   const {
     query,
     results,
@@ -26,10 +27,12 @@ function App() {
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
+          isKeyboardNav.current = true;
           moveSelection("down");
           break;
         case "ArrowUp":
           e.preventDefault();
+          isKeyboardNav.current = true;
           moveSelection("up");
           break;
         case "Enter":
@@ -77,7 +80,7 @@ function App() {
   const showPreview = selectedResult?.result_type === "Image";
 
   return (
-    <div className="launcher" onKeyDown={handleKeyDown}>
+    <div className="launcher" onKeyDown={handleKeyDown} onMouseMove={() => { isKeyboardNav.current = false; }}>
       <SearchBar query={query} onQueryChange={search} inputRef={inputRef} />
       {browsePath && (
         <div className="breadcrumb">
@@ -90,6 +93,7 @@ function App() {
           selectedIndex={selectedIndex}
           onSelect={setSelectedIndex}
           onLaunch={launch}
+          isKeyboardNav={isKeyboardNav}
         />
         {showPreview && <PreviewPanel result={selectedResult} />}
       </div>

@@ -94,7 +94,14 @@ export function useLauncher() {
             invoke<AppResult[]>("search_folders", { query: q }),
             invoke<AppResult[]>("search_images", { query: q }),
           ]);
-          setResults([...apps, ...folders, ...images]);
+          // Deduplicate by exec path
+          const seen = new Set<string>();
+          const merged = [...apps, ...folders, ...images].filter((r) => {
+            if (seen.has(r.exec)) return false;
+            seen.add(r.exec);
+            return true;
+          });
+          setResults(merged);
         }
       } catch (err) {
         console.error("Search failed:", err);
@@ -163,10 +170,26 @@ export function useLauncher() {
     }
   }, []);
 
-  // Load all apps on mount
+  // Load all apps on mount (no debounce)
   useEffect(() => {
-    search("");
-  }, [search]);
+    let cancelled = false;
+    Promise.all([
+      invoke<AppResult[]>("search_apps", { query: "" }),
+      invoke<AppResult[]>("search_folders", { query: "" }),
+      invoke<AppResult[]>("search_images", { query: "" }),
+    ]).then(([apps, folders, images]) => {
+      if (!cancelled) {
+        const seen = new Set<string>();
+        const merged = [...apps, ...folders, ...images].filter((r) => {
+          if (seen.has(r.exec)) return false;
+          seen.add(r.exec);
+          return true;
+        });
+        setResults(merged);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
