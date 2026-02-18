@@ -1,4 +1,4 @@
-use super::AppEntry;
+use super::{AppEntry, ResultType};
 use freedesktop_desktop_entry::{DesktopEntry, Iter as DesktopIter};
 use std::collections::HashSet;
 use std::fs;
@@ -40,6 +40,7 @@ pub fn index_apps() -> Vec<AppEntry> {
                     exec,
                     icon: entry.icon().map(|s| s.to_string()),
                     description: entry.comment(&["en"]).map(|s| s.to_string()),
+                    result_type: ResultType::App,
                 });
             }
         }

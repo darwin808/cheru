@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { SearchBar } from "./components/SearchBar";
 import { ResultsList } from "./components/ResultsList";
+import { ActionBar } from "./components/ActionBar";
 import { useLauncher } from "./hooks/useLauncher";
 import "./App.css";
 
@@ -44,16 +45,29 @@ function App() {
 
   // Refocus input when window becomes visible
   useEffect(() => {
+    let cancelled = false;
+    let unlistenFn: (() => void) | null = null;
+
     const currentWindow = getCurrentWindow();
-    const unlisten = currentWindow.onFocusChanged(({ payload: focused }) => {
-      if (focused && inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.select();
-      }
-    });
+    currentWindow
+      .onFocusChanged(({ payload: focused }) => {
+        if (cancelled) return;
+        if (focused && inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      })
+      .then((fn) => {
+        if (cancelled) {
+          fn();
+        } else {
+          unlistenFn = fn;
+        }
+      });
 
     return () => {
-      unlisten.then((fn) => fn());
+      cancelled = true;
+      unlistenFn?.();
     };
   }, []);
 
@@ -65,6 +79,9 @@ function App() {
         selectedIndex={selectedIndex}
         onSelect={setSelectedIndex}
         onLaunch={launch}
+      />
+      <ActionBar
+        selectedResult={results[selectedIndex] ?? null}
       />
     </div>
   );

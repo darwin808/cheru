@@ -20,15 +20,18 @@ export function useLauncher() {
     debounceRef.current = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const apps = await invoke<AppResult[]>("search_apps", { query: q });
-        setResults(apps);
+        const [apps, folders] = await Promise.all([
+          invoke<AppResult[]>("search_apps", { query: q }),
+          invoke<AppResult[]>("search_folders", { query: q }),
+        ]);
+        setResults([...apps, ...folders]);
       } catch (err) {
         console.error("Search failed:", err);
         setResults([]);
       } finally {
         setIsLoading(false);
       }
-    }, 60);
+    }, 100);
   }, []);
 
   const launch = useCallback(async () => {
@@ -74,6 +77,15 @@ export function useLauncher() {
   useEffect(() => {
     search("");
   }, [search]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   return {
     query,

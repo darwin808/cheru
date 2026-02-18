@@ -56,6 +56,7 @@ mod tests {
             exec: format!("/usr/bin/{}", name.to_lowercase()),
             icon: None,
             description: None,
+            result_type: crate::indexer::ResultType::App,
         }
     }
 

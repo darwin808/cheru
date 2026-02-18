@@ -1,8 +1,7 @@
 .list {
-  list-style: none;
   overflow-y: auto;
   flex: 1;
-  padding: 6px 0;
+  padding: 4px 0;
 }
 
 .list::-webkit-scrollbar {
@@ -18,13 +17,27 @@
   border-radius: 3px;
 }
 
+.section {
+  padding: 0;
+}
+
+.sectionHeader {
+  padding: 8px 20px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
 .item {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 8px 20px;
   cursor: pointer;
-  transition: background 0.12s ease;
-  gap: 14px;
+  transition: background 0.1s ease;
+  gap: 12px;
 }
 
 .item:hover {
@@ -40,9 +53,9 @@
 }
 
 .appIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
   background: var(--bg-secondary);
   display: flex;
   align-items: center;
@@ -51,23 +64,34 @@
 }
 
 .appIconPlaceholder {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--accent);
 }
 
+.appIconImg {
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
 .appInfo {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
+  gap: 8px;
   min-width: 0;
+  flex: 1;
 }
 
 .appName {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 60%;
 }
 
 .appDescription {
@@ -76,7 +100,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
+  min-width: 0;
+}
+
+.typeLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .empty {

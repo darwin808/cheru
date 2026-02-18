@@ -29,7 +29,7 @@ export function SearchBar({ query, onQueryChange, inputRef }: SearchBarProps) {
         type="text"
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Search applications..."
+        placeholder="Search for anything..."
         spellCheck={false}
         autoFocus
       />

@@ -4,7 +4,7 @@ mod matcher;
 
 use commands::AppState;
 use matcher::FuzzyMatcher;
-use std::sync::Mutex;
+use std::sync::{Mutex, RwLock};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::TrayIconBuilder,
@@ -16,14 +16,33 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
-            // Build app index
+            // Build app index (fast — no icon conversion yet)
             let index = indexer::build_index();
             println!("Indexed {} applications", index.len());
 
+            // Build folder index
+            let folder_index = indexer::build_folder_index();
+            println!("Indexed {} folders", folder_index.len());
+
             // Store state
-            app.manage(AppState {
-                index,
+            let state = AppState {
+                index: RwLock::new(index),
+                folder_index,
                 matcher: Mutex::new(FuzzyMatcher::new()),
+            };
+            app.manage(state);
+
+            // Spawn background icon conversion
+            let app_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                let state = app_handle.state::<AppState>();
+                let mut index = state.index.write().unwrap();
+                #[cfg(target_os = "macos")]
+                {
+                    indexer::macos::convert_icons(&mut index);
+                    println!("Icon conversion complete");
+                }
+                drop(index);
             });
 
             // Set up system tray
@@ -83,6 +102,7 @@ pub fn run() {
             commands::launch_app,
             commands::hide_launcher_window,
             commands::get_index_size,
+            commands::search_folders,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
