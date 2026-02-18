@@ -1,0 +1,33 @@
+[package]
+name = "cheru"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cheru_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[[bin]]
+name = "cheru"
+path = "src/main.rs"
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
+tauri-plugin-global-shortcut = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+nucleo-matcher = "0.3"
+thiserror = "2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+freedesktop-desktop-entry = "0.7"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+plist = "1"
+dirs = "6"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

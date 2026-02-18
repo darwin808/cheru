@@ -1,0 +1,30 @@
+.searchBar {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.searchIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-right: 14px;
+}
+
+.input {
+  flex: 1;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-family: var(--font-stack);
+  caret-color: var(--accent);
+}
+
+.input::placeholder {
+  color: var(--text-placeholder);
+}
