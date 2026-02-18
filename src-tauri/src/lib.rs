@@ -5,7 +5,7 @@ mod matcher;
 
 use commands::AppState;
 use matcher::FuzzyMatcher;
-use std::sync::{Mutex, RwLock};
+use std::sync::{Mutex, OnceLock, RwLock};
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::TrayIconBuilder,
@@ -72,19 +72,11 @@ pub fn run() {
             let index = indexer::build_index();
             println!("Indexed {} applications", index.len());
 
-            // Build folder index
-            let folder_index = indexer::build_folder_index();
-            println!("Indexed {} folders", folder_index.len());
-
-            // Build image index
-            let image_index = indexer::build_image_index();
-            println!("Indexed {} images", image_index.len());
-
             // Store state
             let state = AppState {
                 index: RwLock::new(index),
-                folder_index,
-                image_index,
+                folder_index: OnceLock::new(),
+                image_index: OnceLock::new(),
                 matcher: Mutex::new(FuzzyMatcher::new()),
             };
             app.manage(state);

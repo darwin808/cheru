@@ -8,7 +8,8 @@ pub enum ResultType {
 }
 
 const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
-const MAX_IMAGES: usize = 5000;
+const MAX_IMAGES: usize = 2000;
+const MAX_FOLDERS: usize = 500;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppEntry {
@@ -58,9 +59,13 @@ pub fn build_folder_index() -> Vec<AppEntry> {
     ];
 
     for dir in &search_dirs {
-        collect_folders(dir, 0, 3, &mut folders, &mut seen);
+        if folders.len() >= MAX_FOLDERS {
+            break;
+        }
+        collect_folders(dir, 0, 2, &mut folders, &mut seen);
     }
 
+    folders.truncate(MAX_FOLDERS);
     folders.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     folders
 }
@@ -84,7 +89,7 @@ pub fn build_image_index() -> Vec<AppEntry> {
         if images.len() >= MAX_IMAGES {
             break;
         }
-        collect_images(dir, 0, 3, &mut images, &mut seen);
+        collect_images(dir, 0, 2, &mut images, &mut seen);
     }
 
     images.truncate(MAX_IMAGES);
@@ -179,7 +184,7 @@ fn collect_folders(
     folders: &mut Vec<AppEntry>,
     seen: &mut std::collections::HashSet<std::path::PathBuf>,
 ) {
-    if depth >= max_depth {
+    if depth >= max_depth || folders.len() >= MAX_FOLDERS {
         return;
     }
 

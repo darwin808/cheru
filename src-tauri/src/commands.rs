@@ -1,5 +1,5 @@
 use std::process::Command;
-use std::sync::{Mutex, RwLock};
+use std::sync::{Mutex, OnceLock, RwLock};
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
@@ -11,8 +11,8 @@ use crate::matcher::FuzzyMatcher;
 
 pub struct AppState {
     pub index: RwLock<Vec<AppEntry>>,
-    pub folder_index: Vec<AppEntry>,
-    pub image_index: Vec<AppEntry>,
+    pub folder_index: OnceLock<Vec<AppEntry>>,
+    pub image_index: OnceLock<Vec<AppEntry>>,
     pub matcher: Mutex<FuzzyMatcher>,
 }
 
@@ -171,13 +171,17 @@ pub fn search_folders(query: String, state: State<'_, AppState>) -> Vec<AppResul
         return Vec::new();
     }
 
+    let folder_index = state.folder_index.get_or_init(|| {
+        crate::indexer::build_folder_index()
+    });
+
     let mut matcher = state.matcher.lock().unwrap_or_else(|e| e.into_inner());
-    let indices = matcher.search(&query, &state.folder_index);
+    let indices = matcher.search(&query, folder_index);
 
     indices
         .into_iter()
         .take(10)
-        .map(|idx| AppResult::from(&state.folder_index[idx]))
+        .map(|idx| AppResult::from(&folder_index[idx]))
         .collect()
 }
 
@@ -187,13 +191,17 @@ pub fn search_images(query: String, state: State<'_, AppState>) -> Vec<AppResult
         return Vec::new();
     }
 
+    let image_index = state.image_index.get_or_init(|| {
+        crate::indexer::build_image_index()
+    });
+
     let mut matcher = state.matcher.lock().unwrap_or_else(|e| e.into_inner());
-    let indices = matcher.search(&query, &state.image_index);
+    let indices = matcher.search(&query, image_index);
 
     indices
         .into_iter()
         .take(20)
-        .map(|idx| AppResult::from(&state.image_index[idx]))
+        .map(|idx| AppResult::from(&image_index[idx]))
         .collect()
 }
 
