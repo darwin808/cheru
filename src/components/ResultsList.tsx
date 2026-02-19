@@ -17,9 +17,12 @@ interface Section {
 }
 
 const TYPE_LABELS: Record<string, string> = {
+  Calculator: "Calculator",
   App: "Applications",
+  System: "System",
   Folder: "Folders",
   Image: "Images",
+  WebSearch: "Web Search",
 };
 
 function groupByType(results: AppResult[]): Section[] {
@@ -119,6 +122,12 @@ export function ResultsList({
                         ? "\u{1F4C1}"
                         : result.result_type === "Image"
                         ? "\u{1F5BC}"
+                        : result.result_type === "Calculator"
+                        ? "\u{1F5A9}"
+                        : result.result_type === "System"
+                        ? "\u{2699}"
+                        : result.result_type === "WebSearch"
+                        ? "\u{1F50D}"
                         : result.name.charAt(0).toUpperCase()}
                     </span>
                   )}
@@ -132,7 +141,7 @@ export function ResultsList({
                   )}
                 </div>
                 <span className={styles.typeLabel}>
-                  {result.result_type === "App" ? "Application" : result.result_type === "Folder" ? "Folder" : "Image"}
+                  {TYPE_LABELS[result.result_type] ?? result.result_type}
                 </span>
               </div>
             );

@@ -1,4 +1,4 @@
-export type ResultType = "App" | "Folder" | "Image";
+export type ResultType = "App" | "Folder" | "Image" | "System" | "Calculator" | "WebSearch";
 
 export interface AppResult {
   name: string;

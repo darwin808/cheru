@@ -89,18 +89,45 @@ export function useLauncher() {
         } else {
           // Normal search mode
           setBrowsePath(null);
-          const [apps, folders, images] = await Promise.all([
+          const [apps, folders, images, calcResult] = await Promise.all([
             invoke<AppResult[]>("search_apps", { query: q }),
             invoke<AppResult[]>("search_folders", { query: q }),
             invoke<AppResult[]>("search_images", { query: q }),
+            invoke<string | null>("eval_expression", { expr: q }),
           ]);
           // Deduplicate by exec path
           const seen = new Set<string>();
-          const merged = [...apps, ...folders, ...images].filter((r) => {
-            if (seen.has(r.exec)) return false;
-            seen.add(r.exec);
-            return true;
-          });
+          const merged: AppResult[] = [];
+
+          // Prepend calculator result if available
+          if (calcResult) {
+            merged.push({
+              name: `= ${calcResult}`,
+              exec: `calc:${calcResult}`,
+              icon: null,
+              description: q,
+              result_type: "Calculator",
+            });
+          }
+
+          for (const r of [...apps, ...folders, ...images]) {
+            if (!seen.has(r.exec)) {
+              seen.add(r.exec);
+              merged.push(r);
+            }
+          }
+
+          // Web search fallback when few results
+          if (q.length >= 2 && merged.length < 3) {
+            merged.push({
+              name: `Search Google for "${q}"`,
+              exec: `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+              icon: null,
+              description: "Open in browser",
+              result_type: "WebSearch",
+            });
+          }
+
           setResults(merged);
         }
       } catch (err) {
@@ -130,7 +157,15 @@ export function useLauncher() {
     }
 
     try {
-      if (app.result_type === "Folder" || app.result_type === "Image") {
+      if (app.result_type === "Calculator") {
+        // Calculator results are display-only, do nothing on Enter
+        return;
+      } else if (app.result_type === "WebSearch") {
+        await invoke("open_url", { url: app.exec });
+      } else if (app.result_type === "System") {
+        const id = app.exec.replace("system:", "");
+        await invoke("run_system_command", { id });
+      } else if (app.result_type === "Folder" || app.result_type === "Image") {
         await invoke("open_path", { path: app.exec });
       } else {
         await invoke("launch_app", { exec: app.exec });

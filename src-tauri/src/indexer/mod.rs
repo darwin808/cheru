@@ -5,6 +5,7 @@ pub enum ResultType {
     App,
     Folder,
     Image,
+    System,
 }
 
 const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];
@@ -95,6 +96,54 @@ pub fn build_image_index() -> Vec<AppEntry> {
     images.truncate(MAX_IMAGES);
     images.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     images
+}
+
+pub fn build_system_commands() -> Vec<AppEntry> {
+    let mut cmds = Vec::new();
+
+    #[cfg(target_os = "macos")]
+    {
+        let commands = [
+            ("Lock Screen", "system:lock", "Lock the screen"),
+            ("Sleep", "system:sleep", "Put the computer to sleep"),
+            ("Restart", "system:restart", "Restart the computer"),
+            ("Shut Down", "system:shutdown", "Shut down the computer"),
+            ("Log Out", "system:logout", "Log out of the current session"),
+            ("Empty Trash", "system:empty-trash", "Empty the Trash"),
+            ("Toggle Dark Mode", "system:toggle-dark-mode", "Switch between light and dark mode"),
+        ];
+        for (name, exec, desc) in commands {
+            cmds.push(AppEntry {
+                name: name.to_string(),
+                exec: exec.to_string(),
+                icon: None,
+                description: Some(desc.to_string()),
+                result_type: ResultType::System,
+            });
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let commands = [
+            ("Lock Screen", "system:lock", "Lock the screen"),
+            ("Sleep", "system:sleep", "Suspend the computer"),
+            ("Restart", "system:restart", "Restart the computer"),
+            ("Shut Down", "system:shutdown", "Shut down the computer"),
+            ("Log Out", "system:logout", "Log out of the current session"),
+        ];
+        for (name, exec, desc) in commands {
+            cmds.push(AppEntry {
+                name: name.to_string(),
+                exec: exec.to_string(),
+                icon: None,
+                description: Some(desc.to_string()),
+                result_type: ResultType::System,
+            });
+        }
+    }
+
+    cmds
 }
 
 fn collect_images(

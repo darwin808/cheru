@@ -166,6 +166,127 @@ pub fn get_theme() -> config::ThemeConfig {
 }
 
 #[tauri::command]
+pub fn eval_expression(expr: String) -> Option<String> {
+    crate::calculator::evaluate(&expr)
+}
+
+#[tauri::command]
+pub fn run_system_command(id: String) -> Result<(), CommandError> {
+    #[cfg(target_os = "macos")]
+    {
+        match id.as_str() {
+            "lock" => {
+                Command::new("open")
+                    .arg("/System/Library/CoreServices/ScreenSaverEngine.app")
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "sleep" => {
+                Command::new("osascript")
+                    .args(["-e", "tell app \"System Events\" to sleep"])
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "restart" => {
+                Command::new("osascript")
+                    .args(["-e", "tell app \"System Events\" to restart"])
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "shutdown" => {
+                Command::new("osascript")
+                    .args(["-e", "tell app \"System Events\" to shut down"])
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "logout" => {
+                Command::new("osascript")
+                    .args(["-e", "tell app \"System Events\" to log out"])
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "empty-trash" => {
+                Command::new("osascript")
+                    .args(["-e", "tell app \"Finder\" to empty the trash"])
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "toggle-dark-mode" => {
+                Command::new("osascript")
+                    .args(["-e", "tell app \"System Events\" to tell appearance preferences to set dark mode to not dark mode"])
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            _ => return Err(CommandError::LaunchError(format!("Unknown system command: {}", id))),
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        match id.as_str() {
+            "lock" => {
+                Command::new("loginctl")
+                    .arg("lock-session")
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "sleep" => {
+                Command::new("systemctl")
+                    .arg("suspend")
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "restart" => {
+                Command::new("systemctl")
+                    .arg("reboot")
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "shutdown" => {
+                Command::new("systemctl")
+                    .arg("poweroff")
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            "logout" => {
+                Command::new("loginctl")
+                    .args(["terminate-user", &std::env::var("USER").unwrap_or_default()])
+                    .spawn()
+                    .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+            }
+            _ => return Err(CommandError::LaunchError(format!("Unknown system command: {}", id))),
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn open_url(url: String) -> Result<(), CommandError> {
+    if !url.starts_with("https://") {
+        return Err(CommandError::LaunchError("Only HTTPS URLs allowed".into()));
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(&url)
+            .spawn()
+            .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("xdg-open")
+            .arg(&url)
+            .spawn()
+            .map_err(|e| CommandError::LaunchError(e.to_string()))?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn search_folders(query: String, state: State<'_, AppState>) -> Vec<AppResult> {
     if query.len() < 2 {
         return Vec::new();
@@ -336,6 +457,7 @@ pub fn browse_directory(path: String, filter: String) -> Result<Vec<AppResult>, 
                 crate::indexer::ResultType::Folder => 0,
                 crate::indexer::ResultType::App => 1,
                 crate::indexer::ResultType::Image => 2,
+                crate::indexer::ResultType::System => 3,
             };
             type_ord(&a.result_type)
                 .cmp(&type_ord(&b.result_type))

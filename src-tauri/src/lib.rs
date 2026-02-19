@@ -1,3 +1,4 @@
+mod calculator;
 mod commands;
 mod config;
 mod indexer;
@@ -69,7 +70,8 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             // Build app index (fast — no icon conversion yet)
-            let index = indexer::build_index();
+            let mut index = indexer::build_index();
+            index.extend(indexer::build_system_commands());
             println!("Indexed {} applications", index.len());
 
             // Store state
@@ -161,6 +163,9 @@ pub fn run() {
             commands::open_path,
             commands::browse_directory,
             commands::get_theme,
+            commands::eval_expression,
+            commands::run_system_command,
+            commands::open_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
