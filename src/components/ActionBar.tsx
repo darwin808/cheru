@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import type { AppResult } from "../types/launcher";
 import styles from "./ActionBar.module.css";
 
@@ -6,6 +8,12 @@ interface ActionBarProps {
 }
 
 export function ActionBar({ selectedResult }: ActionBarProps) {
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    getVersion().then(setVersion);
+  }, []);
+
   const actionLabel = selectedResult
     ? selectedResult.result_type === "Folder"
       ? "Open Folder"
@@ -17,6 +25,7 @@ export function ActionBar({ selectedResult }: ActionBarProps) {
   return (
     <div className={styles.actionBar}>
       <div className={styles.left}>
+        {version && <span className={styles.version}>v{version}</span>}
         {selectedResult && (
           <span className={styles.selectedType}>
             {selectedResult.result_type === "App"
