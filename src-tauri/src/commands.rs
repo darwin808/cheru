@@ -334,10 +334,20 @@ pub fn search_file_contents(query: String) -> Vec<AppResult> {
         return Vec::new();
     }
 
-    // Check if rg is available
-    if Command::new("rg").arg("--version").output().is_err() {
-        return Vec::new();
-    }
+    // Find rg binary — GUI apps don't inherit shell PATH
+    let rg = [
+        "/opt/homebrew/bin/rg",
+        "/usr/local/bin/rg",
+        "/usr/bin/rg",
+    ]
+    .iter()
+    .find(|p| std::path::Path::new(p).exists())
+    .copied();
+
+    let rg = match rg {
+        Some(path) => path,
+        None => return Vec::new(),
+    };
 
     let home = dirs::home_dir().unwrap_or_default();
     let search_dirs: Vec<std::path::PathBuf> = [
@@ -352,7 +362,7 @@ pub fn search_file_contents(query: String) -> Vec<AppResult> {
         return Vec::new();
     }
 
-    let output = Command::new("rg")
+    let output = Command::new(rg)
         .args([
             "--files-with-matches",
             "--max-count", "1",
