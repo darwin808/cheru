@@ -136,7 +136,7 @@ export function useLauncher() {
       } finally {
         setIsLoading(false);
       }
-    }, 100);
+    }, 300);
   }, [resolveFirstSegment]);
 
   const launch = useCallback(async () => {
