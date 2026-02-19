@@ -12,6 +12,7 @@ import "./App.css";
 function App() {
   const inputRef = useRef<HTMLInputElement>(null);
   const isKeyboardNav = useRef(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
   const {
     query,
     results,
@@ -26,15 +27,14 @@ function App() {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      isKeyboardNav.current = true;
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          isKeyboardNav.current = true;
           moveSelection("down");
           break;
         case "ArrowUp":
           e.preventDefault();
-          isKeyboardNav.current = true;
           moveSelection("up");
           break;
         case "Enter":
@@ -93,7 +93,12 @@ function App() {
   const showPreview = selectedResult?.result_type === "Image";
 
   return (
-    <div className="launcher" onKeyDown={handleKeyDown} onMouseMove={() => { isKeyboardNav.current = false; }}>
+    <div className="launcher" onKeyDown={handleKeyDown} onMouseMove={(e) => {
+        if (e.clientX !== lastMousePos.current.x || e.clientY !== lastMousePos.current.y) {
+          lastMousePos.current = { x: e.clientX, y: e.clientY };
+          isKeyboardNav.current = false;
+        }
+      }}>
       <SearchBar query={query} onQueryChange={search} inputRef={inputRef} />
       {browsePath && (
         <div className="breadcrumb">

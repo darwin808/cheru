@@ -22,6 +22,7 @@ const TYPE_LABELS: Record<string, string> = {
   System: "System",
   Folder: "Folders",
   Image: "Images",
+  File: "Files",
   WebSearch: "Web Search",
 };
 
@@ -128,6 +129,8 @@ export function ResultsList({
                         ? "\u{2699}"
                         : result.result_type === "WebSearch"
                         ? "\u{1F50D}"
+                        : result.result_type === "File"
+                        ? "\u{1F4C4}"
                         : result.name.charAt(0).toUpperCase()}
                     </span>
                   )}

@@ -166,6 +166,7 @@ pub fn run() {
             commands::eval_expression,
             commands::run_system_command,
             commands::open_url,
+            commands::search_file_contents,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

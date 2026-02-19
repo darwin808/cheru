@@ -6,6 +6,7 @@ pub enum ResultType {
     Folder,
     Image,
     System,
+    File,
 }
 
 const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "svg"];

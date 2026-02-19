@@ -326,6 +326,76 @@ pub fn search_images(query: String, state: State<'_, AppState>) -> Vec<AppResult
         .collect()
 }
 
+const MAX_CONTENT_RESULTS: usize = 20;
+
+#[tauri::command]
+pub fn search_file_contents(query: String) -> Vec<AppResult> {
+    if query.len() < 2 {
+        return Vec::new();
+    }
+
+    // Check if rg is available
+    if Command::new("rg").arg("--version").output().is_err() {
+        return Vec::new();
+    }
+
+    let home = dirs::home_dir().unwrap_or_default();
+    let search_dirs: Vec<std::path::PathBuf> = [
+        "Desktop", "Documents", "Downloads", "Projects", "Developer", "Code",
+    ]
+    .iter()
+    .map(|d| home.join(d))
+    .filter(|d| d.exists())
+    .collect();
+
+    if search_dirs.is_empty() {
+        return Vec::new();
+    }
+
+    let output = Command::new("rg")
+        .args([
+            "--files-with-matches",
+            "--max-count", "1",
+            "--max-depth", "4",
+            "--max-filesize", "1M",
+            "--color", "never",
+            "--no-heading",
+            &query,
+        ])
+        .args(&search_dirs)
+        .output();
+
+    let output = match output {
+        Ok(o) => o,
+        Err(_) => return Vec::new(),
+    };
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut results = Vec::new();
+
+    for line in stdout.lines() {
+        if results.len() >= MAX_CONTENT_RESULTS {
+            break;
+        }
+        let path = std::path::Path::new(line);
+        let name = match path.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n.to_string(),
+            None => continue,
+        };
+        let description = path.parent().map(|p| p.to_string_lossy().to_string());
+
+        results.push(AppResult {
+            name,
+            exec: line.to_string(),
+            icon: None,
+            description,
+            result_type: crate::indexer::ResultType::File,
+        });
+    }
+
+    results
+}
+
 #[tauri::command]
 pub fn open_path(path: String) -> Result<(), CommandError> {
     let p = std::path::Path::new(&path);
@@ -458,6 +528,7 @@ pub fn browse_directory(path: String, filter: String) -> Result<Vec<AppResult>, 
                 crate::indexer::ResultType::App => 1,
                 crate::indexer::ResultType::Image => 2,
                 crate::indexer::ResultType::System => 3,
+                crate::indexer::ResultType::File => 4,
             };
             type_ord(&a.result_type)
                 .cmp(&type_ord(&b.result_type))

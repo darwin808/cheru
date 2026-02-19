@@ -37,7 +37,18 @@ export function useLauncher() {
     debounceRef.current = setTimeout(async () => {
       setIsLoading(true);
       try {
-        if (q.includes("/")) {
+        if (q.startsWith(">")) {
+          // Content search mode via ripgrep
+          setBrowsePath(null);
+          const contentQuery = q.substring(1).trim();
+          if (contentQuery.length < 2) {
+            setResults([]);
+            setIsLoading(false);
+            return;
+          }
+          const files = await invoke<AppResult[]>("search_file_contents", { query: contentQuery });
+          setResults(files);
+        } else if (q.includes("/")) {
           // Browse mode: parse path segments
           const slashIndex = q.indexOf("/");
           const firstSegment = q.substring(0, slashIndex);
@@ -165,7 +176,7 @@ export function useLauncher() {
       } else if (app.result_type === "System") {
         const id = app.exec.replace("system:", "");
         await invoke("run_system_command", { id });
-      } else if (app.result_type === "Folder" || app.result_type === "Image") {
+      } else if (app.result_type === "Folder" || app.result_type === "Image" || app.result_type === "File") {
         await invoke("open_path", { path: app.exec });
       } else {
         await invoke("launch_app", { exec: app.exec });
