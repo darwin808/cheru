@@ -60,3 +60,21 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+  update-homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          FILE=$(gh api repos/darwin808/homebrew-cheru/contents/Casks/cheru.rb)
+          SHA=$(echo "$FILE" | jq -r '.sha')
+          CONTENT=$(echo "$FILE" | jq -r '.content' | base64 -d | sed "s/version \"[0-9.]*\"/version \"$VERSION\"/" | base64 -w 0)
+          gh api repos/darwin808/homebrew-cheru/contents/Casks/cheru.rb \
+            -X PUT \
+            -f message="chore: bump version to $VERSION" \
+            -f content="$CONTENT" \
+            -f sha="$SHA"
