@@ -68,6 +68,7 @@ fn setup_autostart(enabled: bool) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             // Build app index (fast — no icon conversion yet)
             let mut index = indexer::build_index();

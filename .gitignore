@@ -4,6 +4,7 @@ dist/
 
 # Rust
 src-tauri/target/
+src-tauri/binaries/
 
 # OS
 .DS_Store

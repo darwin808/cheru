@@ -3,6 +3,7 @@ use std::sync::{Mutex, OnceLock, RwLock};
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
+use tauri_plugin_shell::ShellExt;
 use thiserror::Error;
 
 use crate::config;
@@ -329,53 +330,46 @@ pub fn search_images(query: String, state: State<'_, AppState>) -> Vec<AppResult
 const MAX_CONTENT_RESULTS: usize = 20;
 
 #[tauri::command]
-pub fn search_file_contents(query: String) -> Vec<AppResult> {
+pub async fn search_file_contents(query: String, app: AppHandle) -> Vec<AppResult> {
     if query.len() < 2 {
         return Vec::new();
     }
 
-    // Find rg binary — GUI apps don't inherit shell PATH
-    let rg = [
-        "/opt/homebrew/bin/rg",
-        "/usr/local/bin/rg",
-        "/usr/bin/rg",
-    ]
-    .iter()
-    .find(|p| std::path::Path::new(p).exists())
-    .copied();
-
-    let rg = match rg {
-        Some(path) => path,
-        None => return Vec::new(),
-    };
-
     let home = dirs::home_dir().unwrap_or_default();
-    let search_dirs: Vec<std::path::PathBuf> = [
+    let search_dirs: Vec<String> = [
         "Desktop", "Documents", "Downloads", "Projects", "Developer", "Code",
     ]
     .iter()
     .map(|d| home.join(d))
     .filter(|d| d.exists())
+    .map(|d| d.to_string_lossy().to_string())
     .collect();
 
     if search_dirs.is_empty() {
         return Vec::new();
     }
 
-    let output = Command::new(rg)
-        .args([
-            "--files-with-matches",
-            "--max-count", "1",
-            "--max-depth", "4",
-            "--max-filesize", "1M",
-            "--color", "never",
-            "--no-heading",
-            &query,
-        ])
-        .args(&search_dirs)
-        .output();
+    let mut args = vec![
+        "--files-with-matches".to_string(),
+        "--max-count".to_string(),
+        "1".to_string(),
+        "--max-depth".to_string(),
+        "4".to_string(),
+        "--max-filesize".to_string(),
+        "1M".to_string(),
+        "--color".to_string(),
+        "never".to_string(),
+        "--no-heading".to_string(),
+        query,
+    ];
+    args.extend(search_dirs);
 
-    let output = match output {
+    let sidecar = match app.shell().sidecar("binaries/rg") {
+        Ok(cmd) => cmd,
+        Err(_) => return Vec::new(),
+    };
+
+    let output = match sidecar.args(&args).output().await {
         Ok(o) => o,
         Err(_) => return Vec::new(),
     };

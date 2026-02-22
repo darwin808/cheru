@@ -9,6 +9,16 @@
     "core:window:allow-hide",
     "core:window:allow-set-focus",
     "core:window:allow-center",
-    "global-shortcut:default"
+    "global-shortcut:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/rg",
+          "sidecar": true,
+          "args": true
+        }
+      ]
+    }
   ]
 }
